@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+
+    <style>
+        #container {
+            padding-left: 10vw;
+            padding-right: 10vw;
+            perspective: 440px;
+
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            align-items: center;
+
+            user-select: none;
+        }
+        #board {
+            width: 80vh;
+            height: 80vh;
+
+            transform: rotateX(10deg);
+
+            display: grid;
+            grid-template-rows:    12.5% 12.5% 12.5% 12.5% 12.5% 12.5% 12.5% 12.5%;
+            grid-template-columns: 12.5% 12.5% 12.5% 12.5% 12.5% 12.5% 12.5% 12.5%;
+
+            div {
+                width: 100%;
+                height: 100%;
+                border: 1px solid black;
+
+                /*2, 18, 34*/
+                &:nth-child(9n),
+                &:nth-child(9n+2),
+                &:nth-child(9n+4):nth-child(-n+40),
+                &:nth-child(9n+6):nth-child(-n+30),
+                &:nth-child(8),
+                &:nth-child(9n-2):nth-last-child(-n+40),
+                &:nth-child(9n-4):nth-last-child(-n+30),
+                &:nth-last-child(8)
+                {
+                    background-color: sandybrown;
+                }
+
+                figure {
+                    width: 100%;
+                    height: 100%;
+                    margin: 0;
+
+                    background-size: auto 90%;
+                    background-position-x: center;
+                    background-position-y: center;
+                    background-repeat: no-repeat;
+
+                    &.pawn.white {
+                        background-image: url("https://pics.clipartpng.com/midle/Pawn_White_Chess_Piece_PNG_Clip_Art-2751.png");
+                    }
+
+                    &.pawn.black {
+                        background-image: url("https://pics.clipartpng.com/midle/Pawn_Black_Chess_Piece_PNG_Clip_Art-2764.png");
+                    }
+
+                    &.rook.white {
+                        background-image: url("https://pics.clipartpng.com/midle/Rook_White_Chess_Piece_PNG_Clip_Art-2754.png");
+                    }
+
+                    &.rook.black {
+                        background-image: url("https://pics.clipartpng.com/midle/Rook_Black_Chess_Piece_PNG_Clip_Art-2765.png");
+                    }
+
+                    &.knight.white {
+                        background-image: url("https://pics.clipartpng.com/midle/Knight_White_Chess_Piece_PNG_Clip_Art-2756.png");
+                    }
+
+                    &.knight.black {
+                        background-image: url("https://pics.clipartpng.com/midle/Knight_Black_Chess_Piece_PNG_Clip_Art-2766.png");
+                    }
+
+                    &.bishop.white {
+                        background-image: url("https://pics.clipartpng.com/midle/Bishop_White_Chess_Piece_PNG_Clip_Art-2752.png");
+                    }
+
+                    &.bishop.black {
+                        background-image: url("https://pics.clipartpng.com/midle/Bishop_Black_Chess_Piece_PNG_Clip_Art-2768.png");
+                    }
+
+                    &.queen.white {
+                        background-image: url("https://pics.clipartpng.com/midle/Queen_White_Chess_Piece_PNG_Clip_Art-2757.png");
+                    }
+
+                    &.queen.black {
+                        background-image: url("https://pics.clipartpng.com/midle/Queen_Black_Chess_Piece_PNG_Clip_Art-2767.png");
+                    }
+
+                    &.king.white {
+                        background-image: url("https://pics.clipartpng.com/midle/King_White_Chess_Piece_PNG_Clip_Art-2755.png");
+                    }
+
+                    &.king.black {
+                        background-image: url("https://pics.clipartpng.com/midle/King_Black_Chess_Piece_PNG_Clip_Art-2769.png");
+                    }
+                }
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div id="container">
+    <div id="board" />
+</div>
+
+<script>
+    let currentPlayer = "white"
+    const board = document.querySelector("#board");
+
+    const ws = new WebSocket("ws://localhost:8999/game");
+    document.addEventListener('player-moved', (e) => {
+      e.stopPropagation()
+      ws.send(`${e.detail.from} ${e.detail.to}`)
+    });
+
+    [8, 7, 6, 5, 4, 3, 2, 1].forEach(x => {
+      [1, 2, 3, 4, 5, 6, 7, 8].forEach(y => {
+        const square = document.createElement("div")
+        square.setAttribute("ondrop", "drop(event)")
+        square.setAttribute("ondragover", "dragOver(event)")
+        square.setAttribute("data-x", x.toString())
+        square.setAttribute("data-y", String.fromCharCode(y + 64))
+
+        let pieceName = ""
+        switch (true) {
+          case x === 2:
+          case x === 7:
+            pieceName = "pawn"
+            break;
+          case x === 1 && y === 1:
+          case x === 8 && y === 1:
+          case x === 1 && y === 8:
+          case x === 8 && y === 8:
+            pieceName = "rook"
+            break
+          case x === 1 && y === 2:
+          case x === 8 && y === 2:
+          case x === 1 && y === 7:
+          case x === 8 && y === 7:
+            pieceName = "knight"
+            break
+          case x === 1 && y === 3:
+          case x === 8 && y === 3:
+          case x === 1 && y === 6:
+          case x === 8 && y === 6:
+            pieceName = "bishop"
+            break
+          case x === 1 && y === 4:
+          case x === 8 && y === 4:
+            pieceName = "queen"
+            break
+          case x === 1 && y === 5:
+          case x === 8 && y === 5:
+            pieceName = "king"
+            break
+        }
+
+        if (pieceName !== "") {
+          const piece = document.createElement("figure")
+          piece.setAttribute("draggable", "true")
+          piece.setAttribute("ondragstart", "dragStart(event)")
+          piece.setAttribute("ondrop", "capture(event)")
+          piece.setAttribute("ondragover", "dragOver(event)")
+          piece.classList.add(pieceName)
+          piece.classList.add(x > 5 ? "black" : "white")
+          piece.setAttribute("id", `${String.fromCharCode(y + 64)}${x}-${pieceName}`)
+
+          // TODO: REMOVE ME.
+          piece.addEventListener("dblclick", e => {e.preventDefault(); e.target.parentNode.removeChild(piece)})
+
+          square.appendChild(piece)
+        }
+
+        board.appendChild(square)
+      })
+    })
+
+    function dragStart(e) {
+      e.dataTransfer.setData("id", e.target.id)
+      e.dataTransfer.effectAllowed = "move"
+    }
+
+    function dragOver(e) {
+      e.preventDefault()
+
+      const piece = document.getElementById(e.dataTransfer.getData("id"))
+
+      const targetSquare = e.target.nodeName === "FIGURE" ? e.target.parentNode : e.target;
+
+      e.dataTransfer.dropEffect = isMoveValid(piece, targetSquare) ? "drop" : "none"
+    }
+
+    function drop(e) {
+      e.preventDefault()
+      move(document.getElementById(e.dataTransfer.getData("id")), e.target)
+    }
+
+    function move(piece, square) {
+      const nextPlayer = currentPlayer === "white" ? "black" : "white"
+      const prevPlayer = currentPlayer
+
+      const toX = Number(square.getAttribute("data-x"));
+      if (piece.classList.contains("king") && [1, 8].includes(toX)) {
+        // castles
+        switch (square.getAttribute("data-y")) {
+          case "C":
+            board.querySelector(`div[data-x="${toX}"][data-y="D"]`).appendChild(board.querySelector(`#A${toX}-rook`))
+            break
+          case "G":
+            board.querySelector(`div[data-x="${toX}"][data-y="F"]`).appendChild(board.querySelector(`#H${toX}-rook`))
+            break
+          default:
+          // regular move, not a castle, carry on...
+        }
+      }
+
+      const originalSquare = piece.parentElement
+      square.appendChild(piece)
+      currentPlayer = nextPlayer
+
+      if (!isKingChecked(board.querySelector(`figure.${prevPlayer}.king`))) {
+        document.dispatchEvent(new CustomEvent("player-moved", {
+          detail: {
+            from: `${originalSquare.getAttribute("data-y")}${originalSquare.getAttribute("data-x")}`,
+            to: `${square.getAttribute("data-y")}${square.getAttribute("data-x")}`,
+          },
+        }))
+        return true
+      }
+
+      // invalid move, allied king checked after our move. revert
+      console.warn("invalid move due to leaving allied king checked")
+      originalSquare.appendChild(piece)
+      currentPlayer = prevPlayer
+
+      return false
+    }
+
+    function capture(e) {
+      // TODO: capturing logic doesn't work properly
+      e.stopPropagation()
+      const nextPlayer = currentPlayer === "white" ? "black" : "white"
+      const prevPlayer = currentPlayer
+      const square = e.target.parentNode;
+
+      if (isKingChecked(board.querySelector(`figure.${prevPlayer}.king`))) {
+        console.warn("invalid move due to leaving allied king checked")
+        return
+      }
+
+      currentPlayer = nextPlayer
+      e.target.remove()
+      square.appendChild(document.getElementById(e.dataTransfer.getData("id")))
+    }
+
+    function isKingChecked(king) {
+      return Array.from(board
+        .querySelectorAll(`div > figure.${king.classList.contains("white") ? "black" : "white"}`))
+        .reduce(((isChecked, e) => isChecked || isMoveValid(e, king.parentElement)), false)
+    }
+
+    function isMoveValid(piece, square) {
+      if (!piece.classList.contains(currentPlayer)) {
+        // NOT YOUR MOVE!
+        return false;
+      }
+
+      if (piece.parentNode.getAttribute("data-x") === square.getAttribute("data-x") &&
+        piece.parentNode.getAttribute("data-y") === square.getAttribute("data-y")
+      ) {
+        // not a move
+        return false;
+      }
+
+      if (square.childElementCount > 0) {
+        // no capturing self
+        if (square.childNodes.item(0).classList.contains("black") && piece.classList.contains("black")) return false
+        if (square.childNodes.item(0).classList.contains("white") && piece.classList.contains("white")) return false
+      }
+
+      switch (true) {
+        case piece.classList.contains("pawn") && piece.classList.contains("black"):
+          return isBlackPawnMoveValid(piece, square)
+        case piece.classList.contains("pawn") && piece.classList.contains("white"):
+          return isWhitePawnMoveValid(piece, square)
+        case piece.classList.contains("rook"):
+          return isRookMoveValid(piece, square)
+        case piece.classList.contains("knight"):
+          return isKnightMoveValid(piece, square)
+        case piece.classList.contains("bishop"):
+          return isBishopMoveValid(piece, square)
+        case piece.classList.contains("queen"):
+          return isRookMoveValid(piece, square) || isBishopMoveValid(piece, square)
+        case piece.classList.contains("king"):
+          return isKingMoveValid(piece, square);
+        default:
+          console.error("what piece is this?!", piece)
+          return false;
+      }
+    }
+
+    function isWhitePawnMoveValid(piece, square) {
+      const fromX = Number(piece.parentElement.getAttribute("data-x"))
+      const fromY = piece.parentElement.getAttribute("data-y")
+      const toX = Number(square.getAttribute("data-x"))
+      const toY = square.getAttribute("data-y")
+
+      if (fromY === toY
+        && toX - fromX === 1
+        && square.childElementCount === 0
+      ) {
+        // advance
+        return true
+      }
+
+      if (fromY === toY
+        && toX - fromX === 2
+        && fromX === 2
+        && square.childElementCount === 0
+        && board.querySelector(`div[data-x="${fromX+1}"][data-y="${fromY}"] > figure`) === null
+      ) {
+        // double advance
+        return true
+      }
+
+      // capture
+      return Math.abs(fromY.charCodeAt(0) - toY.charCodeAt(0)) === 1
+        && toX - fromX === 1
+        && square.querySelector("figure") !== null;
+    }
+
+    function isBlackPawnMoveValid(piece, square) {
+      const fromX = Number(piece.parentElement.getAttribute("data-x"))
+      const fromY = piece.parentElement.getAttribute("data-y")
+      const toX = Number(square.getAttribute("data-x"))
+      const toY = square.getAttribute("data-y")
+
+      if (fromY === toY
+        && fromX - toX === 1
+        && square.childElementCount === 0
+      ) {
+        // advance
+        return true
+      }
+
+      if (fromY === toY
+        && fromX === 7
+        && fromX - toX === 2
+        && square.childElementCount === 0
+        && board.querySelector(`div[data-x="${fromX-1}"][data-y="${fromY}"] > figure`) === null
+      ) {
+        // double advance
+        return true
+      }
+
+      // capture
+      return Math.abs(fromY.charCodeAt(0) - toY.charCodeAt(0)) === 1
+        && fromX - toX === 1
+        && square.childElementCount === 1;
+    }
+
+    function isRookMoveValid(piece, square) {
+      const fromX = Number(piece.parentElement.getAttribute("data-x"))
+      const fromY = piece.parentElement.getAttribute("data-y")
+      const toX = Number(square.getAttribute("data-x"))
+      const toY = square.getAttribute("data-y")
+
+      if (
+        (fromY === toY && Math.abs(fromX - toX) === 1)
+        || (fromX === toX && Math.abs(fromY.charCodeAt(0) - toY.charCodeAt(0)) === 1)
+      ) {
+        // vertical/horizontal 1 square (easier compute)
+        return true
+      }
+
+      if (fromY === toY
+        && Math.abs(fromX - toX) > 1
+        && board.querySelectorAll(Array(Math.abs(fromX - toX) - 1)
+          .fill(undefined)
+          .map((_, x) => `div[data-x="${x + Math.min(fromX, toX) + 1}"][data-y="${fromY}"] > figure`)
+          .join(",")).length === 0 // no pieces in the way
+      ) {
+        // vertical 2+ squares
+        return true
+      }
+
+      // no pieces in the way
+      return fromX === toX
+        && Math.abs(fromY.charCodeAt(0) - toY.charCodeAt(0)) > 1
+        && board.querySelectorAll(Array(Math.abs(fromY.charCodeAt(0) - toY.charCodeAt(0)) - 1)
+          .fill(undefined)
+          .map((_, y) => `div[data-y="${String.fromCharCode(y + Math.min(fromY.charCodeAt(0), toY.charCodeAt(0)) + 1)}"][data-x="${fromX}"] > figure`)
+          .join(",")).length === 0;
+    }
+
+    function isKnightMoveValid(piece, square) {
+      const fromX = Number(piece.parentElement.getAttribute("data-x"))
+      const fromY = String(piece.parentElement.getAttribute("data-y")).charCodeAt(0)
+      const toX = Number(square.getAttribute("data-x"))
+      const toY = String(square.getAttribute("data-y")).charCodeAt(0)
+
+      return Math.abs(fromX - toX) === 1 && Math.abs(fromY - toY) === 2
+        || Math.abs(fromX - toX) === 2 && Math.abs(fromY - toY) === 1;
+    }
+
+    function isBishopMoveValid(piece, square) {
+      const fromX = Number(piece.parentElement.getAttribute("data-x"))
+      const fromY = piece.parentElement.getAttribute("data-y")
+      const toX = Number(square.getAttribute("data-x"))
+      const toY = square.getAttribute("data-y")
+
+      const directionX = fromX - toX > 0 ? -1 : 1
+      const directionY = fromY.charCodeAt(0) - toY.charCodeAt(0) > 0 ? -1 : 1
+
+      if (
+        Math.abs(fromX - toX) !== Math.abs(fromY.charCodeAt(0) - toY.charCodeAt(0))
+      ) {
+        // no diagonal => invalid
+        return false
+      }
+
+      let i = 1
+      while (i < Math.abs(fromX - toX)) {
+        // piece in the way => invalid
+        const candidate = board.querySelector(`div[data-x="${fromX + (i * directionX)}"][data-y="${String.fromCharCode(fromY.charCodeAt(0) + (i * directionY))}"]`)
+        if (candidate.childElementCount > 0) {
+          return false
+        }
+
+        i++
+      }
+
+      return true
+    }
+
+    function isKingMoveValid(piece, square) {
+      const fromX = Number(piece.parentElement.getAttribute("data-x"))
+      const fromY = piece.parentElement.getAttribute("data-y")
+      const toX = Number(square.getAttribute("data-x"))
+      const toY = square.getAttribute("data-y")
+
+      if (fromY === "E"
+        && fromX === toX
+        && (fromX === 1 || fromX === 8)
+        && toY === "G"
+        && board.querySelector(`div[data-x="${fromX}"][data-y="F"] > figure`) === null
+        && board.querySelector(`div[data-x="${fromX}"][data-y="G"] > figure`) === null
+        && board.querySelector(`div[data-x="${fromX}"][data-y="H"] > figure.rook`) !== null
+      ) {
+        // castle king side
+        return true
+      }
+
+      if (fromY === "E"
+        && fromX === toX
+        && (fromX === 1 || fromX === 8)
+        && toY === "C"
+        && board.querySelector(`div[data-x="${fromX}"][data-y="A"] > figure.rook`) !== null
+        && board.querySelector(`div[data-x="${fromX}"][data-y="B"] > figure`) === null
+        && board.querySelector(`div[data-x="${fromX}"][data-y="C"] > figure`) === null
+        && board.querySelector(`div[data-x="${fromX}"][data-y="D"] > figure`) === null
+      ) {
+        // castle queen side
+        return true
+      }
+
+      if (Math.abs(fromX - toX) > 1 || Math.abs(fromY.charCodeAt(0) - toY.charCodeAt(0)) > 1) {
+        // too far
+        return false
+      }
+
+      const ghost = document.createElement("figure");
+      square.appendChild(ghost)
+      let isTargetSquareChecked = false
+      board.querySelectorAll(`div > figure.${piece.classList.contains("black") ? "white" : "black"}`).forEach(p => {
+        if (isTargetSquareChecked) {
+          // don't bother, we already know it's under check
+          return
+        }
+
+        // see if piece can check the target square
+        switch (true) {
+          case p.classList.contains("pawn") && p.classList.contains("black"):
+            isTargetSquareChecked = isBlackPawnMoveValid(p, square)
+            break
+          case p.classList.contains("pawn") && p.classList.contains("white"):
+            isTargetSquareChecked = isWhitePawnMoveValid(p, square)
+            break
+          case p.classList.contains("rook"):
+            isTargetSquareChecked = isRookMoveValid(p, square)
+            break
+          case p.classList.contains("knight"):
+            isTargetSquareChecked = isKnightMoveValid(p, square)
+            break
+          case p.classList.contains("bishop"):
+            isTargetSquareChecked = isBishopMoveValid(p, square)
+            break
+          case p.classList.contains("queen"):
+            isTargetSquareChecked = isRookMoveValid(p, square) || isBishopMoveValid(p, square)
+            break
+          case p.classList.contains("king"):
+            isTargetSquareChecked = Math.abs(p.parentElement.getAttribute("data-x") - square.getAttribute("data-x")) <= 1
+                && Math.abs(p.parentElement.getAttribute("data-y").charCodeAt(0) - square.getAttribute("data-y").charCodeAt(0)) <= 1
+            break
+          default:
+            console.error("what piece is this?!", p)
+            return
+        }
+      })
+
+      square.removeChild(ghost)
+
+      return !isTargetSquareChecked
+    }
+</script>
+</body>
+</html>
